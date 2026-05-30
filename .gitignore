@@ -32,6 +32,10 @@ htmlcov/
 # Logs
 *.log
 
+# Data artifacts
+data/clips/
+*.mp4
+
 # IDE/editor
 .vscode/
 .idea/

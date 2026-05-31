@@ -14,12 +14,10 @@ def get_store_metrics(
     date: Optional[str] = Query(None, description="Date in YYYY-MM-DD format, defaults to UTC today"),
     db: sqlite3.Connection = Depends(get_db)
 ):
-    # Default to today's UTC date if not specified
     if not date:
         date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         
-    # 1. Unique visitors
-    # Count distinct visitor_id with ENTRY events on the specified date, excluding staff
+    # 1. Unique visitors (customers only)
     visitor_cursor = db.execute("""
         SELECT COUNT(DISTINCT visitor_id) as unique_visitors 
         FROM events 
@@ -31,8 +29,7 @@ def get_store_metrics(
     row = visitor_cursor.fetchone()
     unique_visitors = row["unique_visitors"] if row else 0
 
-    # 2. Avg dwell by zone
-    # Average dwell_ms from ZONE_DWELL events grouped by zone_id
+    # 2. Avg dwell by zone (excluding staff)
     dwell_cursor = db.execute("""
         SELECT zone_id, AVG(dwell_ms) as avg_dwell 
         FROM events 
@@ -48,7 +45,7 @@ def get_store_metrics(
         avg_dwell_by_zone[r["zone_id"]] = float(r["avg_dwell"]) if r["avg_dwell"] is not None else 0.0
 
     # 3. Current queue depth
-    # Find latest queue_depth value from BILLING_QUEUE_JOIN events
+    # Find the latest queue_depth from join events
     queue_cursor = db.execute("""
         SELECT metadata_json 
         FROM events 
@@ -68,8 +65,7 @@ def get_store_metrics(
         except Exception:
             current_queue_depth = 0
 
-    # 4. Abandonment rate
-    # Count BILLING_QUEUE_ABANDON and BILLING_QUEUE_JOIN events
+    # 4. Abandonment rate (excluding staff)
     abandon_cursor = db.execute("""
         SELECT 
             SUM(CASE WHEN event_type = 'BILLING_QUEUE_ABANDON' THEN 1 ELSE 0 END) as abandon_count,
@@ -87,10 +83,24 @@ def get_store_metrics(
         if join_count > 0:
             abandonment_rate = float(abandon_count) / float(join_count)
 
-    # 5. Conversion rate placeholder (Phase 3 will compute this using POS correlation)
+    # 5. Conversion rate: correlated billing joins with POS transactions (time window)
     conversion_rate = 0.0
+    if unique_visitors > 0:
+        conversion_cursor = db.execute("""
+            SELECT COUNT(DISTINCT e.visitor_id) as converted_visitors
+            FROM events e
+            JOIN pos_transactions p 
+              ON p.store_id = e.store_id
+              AND p.timestamp_epoch BETWEEN e.timestamp_epoch AND (e.timestamp_epoch + 300000)
+            WHERE e.store_id = ?
+              AND e.event_type = 'BILLING_QUEUE_JOIN'
+              AND e.is_staff = 0
+              AND date(e.timestamp) = ?
+        """, (store_id, date))
+        conv_row = conversion_cursor.fetchone()
+        converted_visitors = conv_row["converted_visitors"] if conv_row else 0
+        conversion_rate = float(converted_visitors) / float(unique_visitors)
 
-    # 6. Data window representation
     data_window = {
         "start": f"{date}T00:00:00Z",
         "end": f"{date}T23:59:59Z"

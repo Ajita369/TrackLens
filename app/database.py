@@ -1,10 +1,12 @@
 import sqlite3
 import os
 import json
-from contextlib import contextmanager
+import csv
+from datetime import datetime, timezone
 from typing import Generator
 
 DATABASE_PATH = os.environ.get("DATABASE_PATH", "./data/tracklens.db")
+POS_CSV_PATH = os.environ.get("POS_CSV_PATH", "./data/Brigade_Bangalore_10_April_26 (1)bc6219c.csv")
 
 def get_db_connection() -> sqlite3.Connection:
     # Ensure the parent directory exists
@@ -27,6 +29,62 @@ def get_db() -> Generator[sqlite3.Connection, None, None]:
         yield conn
     finally:
         conn.close()
+
+def load_pos_data(conn: sqlite3.Connection) -> None:
+    """
+    Parses pos_transactions.csv and seeds the pos_transactions table if empty.
+    """
+    # Check if we already have transactions loaded to avoid duplicate work
+    cursor = conn.execute("SELECT COUNT(*) as cnt FROM pos_transactions")
+    if cursor.fetchone()["cnt"] > 0:
+        print("POS transactions already seeded.")
+        return
+        
+    if not os.path.exists(POS_CSV_PATH):
+        print(f"POS CSV file not found at {POS_CSV_PATH}, skipping initial seed.")
+        return
+        
+    print(f"Seeding POS transactions from {POS_CSV_PATH}...")
+    
+    try:
+        with open(POS_CSV_PATH, mode="r", encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f)
+            count = 0
+            for row in reader:
+                order_id = row.get("order_id")
+                store_id = row.get("store_id")
+                order_date = row.get("order_date")
+                order_time = row.get("order_time")
+                
+                # Retrieve amount (GMV, NMV or total_amount)
+                try:
+                    amount = float(row.get("total_amount", 0.0) or row.get("NMV", 0.0) or 0.0)
+                except ValueError:
+                    amount = 0.0
+                    
+                if order_id and store_id and order_date and order_time:
+                    try:
+                        # Combine DD-MM-YYYY and HH:MM:SS
+                        dt_str = f"{order_date.strip()} {order_time.strip()}"
+                        dt = datetime.strptime(dt_str, "%d-%m-%Y %H:%M:%S")
+                        dt = dt.replace(tzinfo=timezone.utc)
+                        
+                        timestamp_str = dt.isoformat().replace("+00:00", "Z")
+                        timestamp_epoch = int(dt.timestamp() * 1000)
+                        
+                        conn.execute("""
+                            INSERT OR IGNORE INTO pos_transactions (
+                                transaction_id, store_id, timestamp, timestamp_epoch, basket_value_inr
+                            ) VALUES (?, ?, ?, ?, ?)
+                        """, (order_id, store_id, timestamp_str, timestamp_epoch, amount))
+                        count += 1
+                    except Exception as e:
+                        pass
+            
+            conn.commit()
+            print(f"Successfully seeded {count} POS transactions.")
+    except Exception as e:
+        print(f"Error seeding POS transactions: {e}")
 
 def init_db() -> None:
     conn = get_db_connection()
@@ -69,5 +127,9 @@ def init_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_pos_store_time ON pos_transactions (store_id, timestamp_epoch);")
         
         conn.commit()
+        
+        # Load POS data on initialization
+        load_pos_data(conn)
+        
     finally:
         conn.close()

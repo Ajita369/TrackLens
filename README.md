@@ -8,8 +8,8 @@ Follow these steps to set up and run the TrackLens API locally:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/apexretail/tracklens.git
-cd tracklens
+git clone https://github.com/Ajita369/TrackLens.git
+cd Tracklens
 
 # 2. Place dataset files in the correct directories:
 # - Raw videos: data/clips/CAM 1.mp4, CAM 2.mp4, etc.
@@ -27,7 +27,6 @@ curl "http://localhost:8000/stores/ST1008/metrics?date=2026-04-10"
 ```
 
 ## Running Detection Pipeline
-*(Implementation detail of Phase 2)*
 To run the offline computer vision detection pipeline, execute the run script:
 ```bash
 ./pipeline/run.sh
@@ -68,7 +67,7 @@ TrackLens includes a live-updating web-based dashboard that visualizes traffic m
 
 ## Architecture Documentation
 
-For a detailed exploration of system components, pipeline stages, re-identification algorithms, and AI-assisted decisions, refer to:
+For a detailed exploration of system components, pipeline stages, re-identification algorithms, and AI-assisted decisions, refer to these file in docs folder:
 * **System Design Blueprint**: [DESIGN.md](file:///C:/projects/TrackLens/docs/DESIGN.md)
 * **Technical Design Decisions**: [CHOICES.md](file:///C:/projects/TrackLens/docs/CHOICES.md)
 
@@ -88,7 +87,9 @@ python -m pytest tests/ -v --cov=app --cov-report=term-missing
 
 ## Dataset Structure
 
-Place your local resources in the following tree structure:
+> [!NOTE]
+> The `data/clips` directory is explicitly excluded from the Git repository (via `.gitignore`) to avoid committing large binary CCTV video files. To run or test the system locally, please place the store intelligence dataset files directly into the directory structure below.
+
 ```
 tracklens/
 └── data/

@@ -6,8 +6,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application directories (create empty pipeline directory to satisfy COPY if not present yet)
+# Copy application directories
 COPY app/ app/
+COPY dashboard/ dashboard/
 RUN mkdir -p pipeline
 
 # Set environment variables

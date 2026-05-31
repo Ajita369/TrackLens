@@ -47,6 +47,45 @@ The API is fully documented at `/docs` (OpenAPI) once running, and exposes the f
 | `GET` | `/stores/{id}/anomalies` | Returns active operational anomalies (queue spikes, conversion drops, dead zones). |
 | `GET` | `/health` | Returns service status and store feed staleness alerts. |
 
+## Live Dashboard & Simulator
+
+TrackLens includes a live-updating web-based dashboard that visualizes traffic metrics, purchase funnels, zone heatmaps, and active anomaly alerts in real-time.
+
+### Running the Dashboard:
+1. Ensure the API service is running:
+   ```bash
+   docker compose up --build -d
+   ```
+2. In a separate terminal, start the event playback simulation tool (replaying generated events from the pipeline output at a 10x speed multiplier):
+   ```bash
+   # Ingest ST1008 simulated timeline
+   python dashboard/simulate.py --store ST1008 --speed 10
+   ```
+3. Open your browser and navigate to:
+   ```
+   http://localhost:8000/dashboard/
+   ```
+
+## Architecture Documentation
+
+For a detailed exploration of system components, pipeline stages, re-identification algorithms, and AI-assisted decisions, refer to:
+* **System Design Blueprint**: [DESIGN.md](file:///C:/projects/TrackLens/docs/DESIGN.md)
+* **Technical Design Decisions**: [CHOICES.md](file:///C:/projects/TrackLens/docs/CHOICES.md)
+
+## Running Tests
+
+TrackLens has a comprehensive test suite covering edge cases (such as zero-purchase stores, empty/all-staff events), schema validations, and metrics calculations. 
+
+To run the tests with code coverage analysis inside the Docker container:
+```bash
+docker compose exec api pytest tests/ -v --cov=app --cov-report=term-missing --cov-fail-under=70
+```
+
+To run the tests locally:
+```bash
+python -m pytest tests/ -v --cov=app --cov-report=term-missing
+```
+
 ## Dataset Structure
 
 Place your local resources in the following tree structure:
@@ -61,3 +100,4 @@ tracklens/
     └── Brigade_Bangalore_10_April_26 (1)bc6219c.csv
 ```
 The database will be automatically created as a single file inside the `data/` folder at `data/tracklens.db`.
+

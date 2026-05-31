@@ -66,8 +66,14 @@ This section documents where AI tools shaped the architectural design and implem
 - **My Choice & Override**: I overrode the recommendation to use raw SQLite with standard library `sqlite3` and SQL queries.
 - **My Rationale**: TrackLens is designed for a single-candidate coding challenge with strict constraints around zero-cost stacks and single-command deployment reliability. Introducing PostgreSQL requires a secondary Docker container, network setup, volume permissions, health checks, and database migration configurations—introducing multiple points of failure. SQLite handles the dataset volume (under 10,000 events) in microseconds, supports WAL mode for simultaneous reads and writes, requires no extra services, and stores data in a single file inside the mounted data volume.
 
-### Decision 2: Event Ingestion Validation Pattern [TODO]
-- *Marked as TODO. To be fully updated in Phase 5.*
+### Decision 2: Event Ingestion Validation Pattern
+- **AI Recommendation**: The AI assistant suggested standard FastAPI request body validation, where Pydantic validation errors automatically trigger default HTTP 422 Unprocessable Entity responses for the entire request payload.
+- **AI Rationale**: Leverages FastAPI's built-in validation middleware without writing custom parsing or try/catch logic, keeping the endpoint code clean.
+- **My Choice & Override**: I implemented custom item-by-item validation in [ingestion.py](file:///C:/projects/TrackLens/app/ingestion.py) that handles validations individually and returns a standard HTTP `207 Multi-Status` response containing separate `accepted` and `rejected` counts along with granular validation error details for each event.
+- **My Rationale**: In a real production CCTV edge pipeline, events are batch-uploaded (up to 500 at a time). If a single event contains a parsing anomaly (such as a confidence score slightly out of range or a missing non-critical field), rejecting the entire batch with a default HTTP 422 response would halt or back up the edge stream. The custom 207 Multi-Status pattern allows the API to ingest the 499 valid events, while returning a granular report of the single invalid event to the client for edge diagnostics.
 
-### Decision 3: Cross-Camera Re-ID Strategy [TODO]
-- *Marked as TODO. To be fully updated in Phase 5.*
+### Decision 3: Cross-Camera Re-ID Strategy
+- **AI Recommendation**: The AI suggested utilizing a centralized, real-time graph-matching framework with deep feature extraction on every single video frame to continuously merge trajectories.
+- **AI Rationale**: Online graph-based multi-target multi-camera (MTMC) tracking maximizes tracking consistency.
+- **My Choice & Override**: I implemented a decoupled camera responsibility pattern. The Entry camera acts as the primary gatekeeper for creating a `visitor_id`, while the Floor and Billing cameras match local tracker IDs to existing, active `visitor_id` records using 512-dimensional torso embeddings (OSNet) extracted only when crossing critical boundaries.
+- **My Rationale**: Centralized graph matching requires high CPU/GPU resources and is vulnerable to network bottlenecks. By assigning localized primary zone responsibilities to each camera and matching identities only at key boundaries (such as exits and entries), we drastically cut compute requirements (extracting embeddings only on crosses/exits rather than frame-by-frame) while preserving tracking accuracy across cameras.

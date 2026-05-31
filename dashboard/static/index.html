@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackLens — Live Store Intelligence Dashboard</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for modern icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="service-unavailable-banner" class="banner hidden">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>TrackLens Service Temporarily Unavailable. Retrying shortly...</span>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar / Navigation -->
+        <header class="dashboard-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                </div>
+                <div>
+                    <h1>TrackLens</h1>
+                    <p class="subtitle">Store Intelligence Hub</p>
+                </div>
+            </div>
+            
+            <div class="controls-area">
+                <div class="control-group">
+                    <label for="store-selector"><i class="fa-solid fa-shop"></i> Active Store</label>
+                    <select id="store-selector">
+                        <option value="" disabled selected>Loading stores...</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="date-input"><i class="fa-solid fa-calendar-day"></i> Date Filter</label>
+                    <input type="date" id="date-input">
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="dashboard-main">
+            <!-- Summary Metric Cards -->
+            <section class="metrics-grid">
+                <!-- Card 1: Unique Visitors -->
+                <div class="metric-card" id="card-visitors">
+                    <div class="card-header">
+                        <span class="card-title">Unique Visitors</span>
+                        <div class="card-icon blue"><i class="fa-solid fa-users"></i></div>
+                    </div>
+                    <div class="card-body">
+                        <h2 class="metric-value" id="val-visitors">0</h2>
+                        <span class="card-trend text-muted">Customers only</span>
+                    </div>
+                </div>
+
+                <!-- Card 2: Conversion Rate -->
+                <div class="metric-card" id="card-conversion">
+                    <div class="card-header">
+                        <span class="card-title">Conversion Rate</span>
+                        <div class="card-icon" id="icon-conversion"><i class="fa-solid fa-cart-shopping"></i></div>
+                    </div>
+                    <div class="card-body">
+                        <h2 class="metric-value" id="val-conversion">0.0%</h2>
+                        <span class="card-trend" id="trend-conversion">No data</span>
+                    </div>
+                </div>
+
+                <!-- Card 3: Queue Depth -->
+                <div class="metric-card" id="card-queue">
+                    <div class="card-header">
+                        <span class="card-title">Billing Queue Depth</span>
+                        <div class="card-icon yellow" id="icon-queue"><i class="fa-solid fa-people-arrows"></i></div>
+                    </div>
+                    <div class="card-body">
+                        <h2 class="metric-value" id="val-queue">0</h2>
+                        <span class="card-trend text-muted">Active waiting shoppers</span>
+                    </div>
+                </div>
+
+                <!-- Card 4: Abandonment Rate -->
+                <div class="metric-card" id="card-abandonment">
+                    <div class="card-header">
+                        <span class="card-title">Abandonment Rate</span>
+                        <div class="card-icon red"><i class="fa-solid fa-user-slash"></i></div>
+                    </div>
+                    <div class="card-body">
+                        <h2 class="metric-value" id="val-abandonment">0.0%</h2>
+                        <span class="card-trend text-muted">Left checkout line</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Funnel & Heatmap section -->
+            <section class="insights-grid">
+                <!-- Funnel Analysis -->
+                <div class="insight-card funnel-card">
+                    <div class="insight-header">
+                        <h3><i class="fa-solid fa-filter"></i> Customer Conversion Funnel</h3>
+                        <span class="badge">Session Based</span>
+                    </div>
+                    <div class="insight-body" id="funnel-container">
+                        <!-- Dynamic Funnel Rendered by JS -->
+                        <div class="funnel-loading">Loading funnel journey...</div>
+                    </div>
+                </div>
+
+                <!-- Heatmap Analysis -->
+                <div class="insight-card heatmap-card">
+                    <div class="insight-header">
+                        <h3><i class="fa-solid fa-fire-flame-curved"></i> Zone Traffic Heatmap</h3>
+                        <span class="badge">Dwell & Counts</span>
+                    </div>
+                    <div class="insight-body">
+                        <div class="heatmap-header-row">
+                            <span>Zone</span>
+                            <span style="text-align: right;">Visits</span>
+                            <span style="text-align: right;">Avg Dwell</span>
+                            <span style="text-align: center;">Traffic Density</span>
+                        </div>
+                        <div id="heatmap-container">
+                            <div class="heatmap-loading">Loading store zones...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Anomalies section -->
+            <section class="anomalies-section insight-card">
+                <div class="insight-header">
+                    <h3><i class="fa-solid fa-triangle-exclamation"></i> Live Anomaly Alerts</h3>
+                    <span class="pulse-indicator" id="anomaly-indicator"></span>
+                </div>
+                <div class="insight-body">
+                    <div id="anomalies-container" class="anomalies-list">
+                        <div class="anomalies-empty">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <p>No operational anomalies detected. System running normal.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Dashboard Footer -->
+        <footer class="dashboard-footer">
+            <div class="footer-left">
+                <span>Feed Status: </span>
+                <span id="feed-status-badge" class="feed-badge stale">
+                    <i class="fa-solid fa-circle"></i> <span id="feed-status-text">OFFLINE</span>
+                </span>
+                <span class="divider">|</span>
+                <span id="last-event-time" class="text-muted">No feed data received</span>
+            </div>
+            <div class="footer-right">
+                <span id="last-updated-text">Last Updated: Just now</span>
+                <span class="divider">|</span>
+                <span class="text-muted">TrackLens Engine v1.0.0</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

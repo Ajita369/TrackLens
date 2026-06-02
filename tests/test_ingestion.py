@@ -102,3 +102,79 @@ def test_ingest_partial_success(test_client: TestClient, sample_events):
     assert data["accepted"] == 3
     assert data["rejected"] == 2
     assert len(data["errors"]) == 2
+
+def test_ingest_new_schema_format(test_client: TestClient):
+    # A batch with entry, zone_entered, zone_exited, queue_completed
+    batch = [
+        {
+            "event_type": "entry",
+            "id_token": "ID_99991",
+            "store_code": "store_1099",
+            "camera_id": "cam1",
+            "event_timestamp": "2026-06-02T10:00:00.000000",
+            "is_staff": False,
+            "gender_pred": "F",
+            "age_pred": 25,
+            "age_bucket": "25-34"
+        },
+        {
+            "event_type": "zone_entered",
+            "track_id": 901,
+            "store_id": "ST1099",
+            "camera_id": "CAM2",
+            "zone_id": "ST1099_Z01",
+            "zone_name": "Left Shelf",
+            "zone_type": "SHELF",
+            "is_revenue_zone": "Yes",
+            "event_time": "2026-06-02T10:01:00.000000",
+            "gender": "F",
+            "age": 25,
+            "age_bucket": "25-34"
+        },
+        {
+            "event_type": "zone_exited",
+            "track_id": 901,
+            "store_id": "ST1099",
+            "camera_id": "CAM2",
+            "zone_id": "ST1099_Z01",
+            "zone_name": "Left Shelf",
+            "zone_type": "SHELF",
+            "is_revenue_zone": "Yes",
+            "event_time": "2026-06-02T10:02:00.000000",
+            "gender": "F",
+            "age": 25,
+            "age_bucket": "25-34"
+        },
+        {
+            "queue_event_id": "test-queue-event-completed",
+            "event_type": "queue_completed",
+            "track_id": 901,
+            "store_id": "ST1099",
+            "camera_id": "CAM6",
+            "zone_id": "ST1099_Z_BILLING",
+            "zone_name": "Billing Counter Queue",
+            "zone_type": "BILLING",
+            "is_revenue_zone": "Yes",
+            "queue_join_ts": "2026-06-02T10:03:00.000000",
+            "queue_served_ts": "2026-06-02T10:03:10.000000",
+            "queue_exit_ts": "2026-06-02T10:04:00.000000",
+            "wait_seconds": 10,
+            "queue_position_at_join": 1,
+            "abandoned": False,
+            "gender": "F",
+            "age": 25,
+            "age_bucket": "25-34"
+        }
+    ]
+    
+    payload = {"events": batch}
+    response = test_client.post("/events/ingest", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    # 1. Entry -> 1 event
+    # 2. Zone Entered -> 1 event
+    # 3. Zone Exited -> Zone Exit + Synthetic Dwell -> 2 events
+    # 4. Queue Completed -> Queue Join + Queue Dwell + Zone Exit -> 3 events
+    # Total accepted should be 7
+    assert data["accepted"] == 7
+    assert data["rejected"] == 0

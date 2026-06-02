@@ -102,3 +102,9 @@ tracklens/
 ```
 The database will be automatically created as a single file inside the `data/` folder at `data/tracklens.db`.
 
+## Dataset Support (Brigade Road & Store 1 / Store 2)
+
+The system automatically and dynamically resolves and normalizes both the original Brigade Road dataset and the new Store 1 / Store 2 datasets:
+- **POS Transactions**: Supports the original `Brigade_Bangalore_10_April_26 (1)bc6219c.csv` file as well as the new `POS - sample transactionsb1e826f.csv` filename.
+- **Event Ingestion & Replay**: Seamlessly processes both the standard schema (`sample_events.jsonl`) and the alternative tracking/demographics schema format (`sample_eventsbe42122.jsonl`). On-the-fly normalization resolves store codes (e.g. `store_1076` -> `ST1076`), matches local camera track IDs to entry/exit tokens using demographic attributes, generates synthetic `ZONE_DWELL` events from `ZONE_EXIT` events, and auto-injects correlated POS records for queue completions.
+

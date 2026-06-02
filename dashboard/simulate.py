@@ -73,6 +73,17 @@ def main():
     # 1. Locate events file
     events_path = f"data/output/{args.store}/events.jsonl"
     if not os.path.exists(events_path):
+        # Fallback to search in data/
+        data_dir = "data"
+        if os.path.exists(data_dir):
+            files = os.listdir(data_dir)
+            jsonl_files = [f for f in files if f.startswith("sample_events") and f.endswith(".jsonl")]
+            if jsonl_files:
+                jsonl_files.sort(key=len, reverse=True)
+                events_path = os.path.join(data_dir, jsonl_files[0])
+                print(f"Dynamically falling back to sample events file: {events_path}")
+                
+    if not os.path.exists(events_path):
         # Check if the fallback store ID schema works (e.g. ST1008)
         print(f"Error: Events file not found at {events_path}")
         
@@ -93,7 +104,14 @@ def main():
                 continue
             try:
                 evt = json.loads(line)
-                dt = parse_timestamp(evt["timestamp"])
+                ts_str = evt.get("timestamp") or evt.get("event_timestamp") or evt.get("event_time") or evt.get("queue_join_ts") or evt.get("queue_exit_ts")
+                if not ts_str:
+                    print(f"Warning: Line {line_num} has no valid timestamp field")
+                    continue
+                dt = parse_timestamp(ts_str)
+                # Ensure the standard timestamp field is set so that the replay payload has it
+                if "timestamp" not in evt:
+                    evt["timestamp"] = ts_str
                 events.append((dt, evt))
             except Exception as e:
                 print(f"Warning: Skipping malformed line {line_num}: {e}")

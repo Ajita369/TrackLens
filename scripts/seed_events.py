@@ -193,12 +193,22 @@ def generate_mock_events(path: str, count: int = 200):
     print(f"Successfully generated {len(events)} events.")
 
 def seed_events():
-    if not os.path.exists(SAMPLE_EVENTS_PATH):
-        generate_mock_events(SAMPLE_EVENTS_PATH, 200)
+    events_path = SAMPLE_EVENTS_PATH
+    data_dir = "data"
+    if os.path.exists(data_dir):
+        files = os.listdir(data_dir)
+        jsonl_files = [f for f in files if f.startswith("sample_events") and f.endswith(".jsonl")]
+        if jsonl_files:
+            # Sort by length descending to prioritize sample_eventsbe42122.jsonl over sample_events.jsonl
+            jsonl_files.sort(key=len, reverse=True)
+            events_path = os.path.join(data_dir, jsonl_files[0])
+            
+    if not os.path.exists(events_path):
+        generate_mock_events(events_path, 200)
         
-    print(f"Reading events from {SAMPLE_EVENTS_PATH}...")
+    print(f"Reading events from {events_path}...")
     events = []
-    with open(SAMPLE_EVENTS_PATH, "r") as f:
+    with open(events_path, "r") as f:
         for line in f:
             if line.strip():
                 events.append(json.loads(line.strip()))

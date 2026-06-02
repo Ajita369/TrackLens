@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, model_validator, field_validator
+from pydantic import BaseModel, Field, model_validator, field_validator, ConfigDict
 import uuid
 
 class EventType(str, Enum):
@@ -15,6 +15,7 @@ class EventType(str, Enum):
     REENTRY = "REENTRY"
 
 class EventMeta(BaseModel):
+    model_config = ConfigDict(extra="allow")
     queue_depth: Optional[int] = Field(None, description="Current queue depth if in billing zone")
     sku_zone: Optional[str] = Field(None, description="Product category or brand of the zone")
     session_seq: Optional[int] = Field(None, description="Sequence number of the session")

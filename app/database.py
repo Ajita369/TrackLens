@@ -40,14 +40,25 @@ def load_pos_data(conn: sqlite3.Connection) -> None:
         print("POS transactions already seeded.")
         return
         
-    if not os.path.exists(POS_CSV_PATH):
-        print(f"POS CSV file not found at {POS_CSV_PATH}, skipping initial seed.")
+    csv_path = POS_CSV_PATH
+    if not os.path.exists(csv_path):
+        # Scan data directory for matching CSV
+        data_dir = os.path.dirname(DATABASE_PATH) or "./data"
+        if os.path.exists(data_dir):
+            files = os.listdir(data_dir)
+            matching_files = [f for f in files if f.endswith(".csv") and ("pos" in f.lower() or "transaction" in f.lower())]
+            if matching_files:
+                csv_path = os.path.join(data_dir, matching_files[0])
+                print(f"Dynamically resolved POS CSV file: {csv_path}")
+                
+    if not os.path.exists(csv_path):
+        print(f"POS CSV file not found at {POS_CSV_PATH} and no matching file in data dir. Skipping initial seed.")
         return
         
-    print(f"Seeding POS transactions from {POS_CSV_PATH}...")
+    print(f"Seeding POS transactions from {csv_path}...")
     
     try:
-        with open(POS_CSV_PATH, mode="r", encoding="utf-8-sig") as f:
+        with open(csv_path, mode="r", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             count = 0
             for row in reader:

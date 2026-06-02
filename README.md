@@ -103,7 +103,7 @@ python -m pytest tests/ -v --cov=app --cov-report=term-missing
 > The `data/clips` directory is explicitly excluded from the Git repository (via `.gitignore`) to avoid committing large binary CCTV video files. To run or test the system locally, please place the store intelligence dataset files directly into the directory structure below.
 
 ```
-tracklens/
+Tracklens/
 └── data/
     ├── clips/
     │   ├── CAM 1.mp4

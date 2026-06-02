@@ -11,19 +11,28 @@ Follow these steps to set up and run the TrackLens API locally:
 git clone https://github.com/Ajita369/TrackLens.git
 cd Tracklens
 
-# 2. Place dataset files in the correct directories:
+# 2. Place dataset files in the correct directories under data/:
+# For Original Store (ST1008):
 # - Raw videos: data/clips/CAM 1.mp4, CAM 2.mp4, etc.
 # - Layout file: data/Brigade Road - Store layoutc5f5d56.xlsx
 # - Transactions: data/Brigade_Bangalore_10_April_26 (1)bc6219c.csv
+#
+# For New Store (ST1076):
+# - Raw videos: data/Store 1-20260602T101818Z-3-001ec38db8/Store 1/...
+# - Events file: data/sample_eventsbe42122.jsonl
+# - Transactions: data/POS - sample transactionsb1e826f.csv
 
 # 3. Build and start the API service
 docker compose up --build -d
 
-# 4. Ingest mock/sample events to populate the SQLite database
+# 4. Ingest events (automatically detects and seeds ST1076 if present, else ST1008)
 python scripts/seed_events.py
 
 # 5. Query store metrics using curl
+# For ST1008 (Original Store):
 curl "http://localhost:8000/stores/ST1008/metrics?date=2026-04-10"
+# For ST1076 (New Store):
+curl "http://localhost:8000/stores/ST1076/metrics?date=2026-03-08"
 ```
 
 ## Running Detection Pipeline
@@ -57,8 +66,11 @@ TrackLens includes a live-updating web-based dashboard that visualizes traffic m
    ```
 2. In a separate terminal, start the event playback simulation tool (replaying generated events from the pipeline output at a 10x speed multiplier):
    ```bash
-   # Ingest ST1008 simulated timeline
-   python dashboard/simulate.py --store ST1008 --speed 10
+    # For the Original Store (ST1008):
+    python dashboard/simulate.py --store ST1008 --speed 10
+    
+    # For the New Store (ST1076):
+    python dashboard/simulate.py --store ST1076 --speed 10
    ```
 3. Open your browser and navigate to:
    ```

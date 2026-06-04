@@ -79,9 +79,9 @@ TrackLens includes a live-updating web-based dashboard that visualizes traffic m
 
 ## Architecture Documentation
 
-For a detailed exploration of system components, pipeline stages, re-identification algorithms, and AI-assisted decisions, refer to these file in docs folder:
-* **System Design Blueprint**: [DESIGN.md](file:///C:/projects/TrackLens/docs/DESIGN.md)
-* **Technical Design Decisions**: [CHOICES.md](file:///C:/projects/TrackLens/docs/CHOICES.md)
+For a detailed exploration of system components, pipeline stages, re-identification algorithms, and AI-assisted decisions, refer to these files:
+* **System Design Blueprint**: [DESIGN.md](file:///C:/projects/TrackLens/DESIGN.md)
+* **Technical Design Decisions**: [CHOICES.md](file:///C:/projects/TrackLens/CHOICES.md)
 
 ## Running Tests
 
